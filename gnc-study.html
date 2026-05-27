@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="GNC Study">
+<meta name="theme-color" content="#0f0f0f">
+<title>GNC Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f0f;
+  --bg2: #1a1a1a;
+  --bg3: #242424;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --muted: #888;
+  --muted2: #444;
+  --accent: #4f9eff;
+  --green: #4caf7d;
+  --orange: #f5a623;
+  --red: #e05c5c;
+  --sb: env(safe-area-inset-bottom, 0px);
+  --st: env(safe-area-inset-top, 0px);
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Pretendard', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; }
+
+#app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; }
+
+/* NAV */
+.nav { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); padding-top: var(--st); flex-shrink: 0; }
+.nav-btn { flex: 1; padding: 14px 0; font-size: 12px; font-weight: 600; background: none; border: none; color: var(--muted); cursor: pointer; font-family: inherit; border-bottom: 2px solid transparent; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* CONTENT */
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.tab { display: none; padding: 20px 16px; padding-bottom: calc(20px + var(--sb)); }
+.tab.active { display: block; }
+
+/* SECTION HEADER */
+.sec-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; margin-top: 24px; }
+.sec-title:first-child { margin-top: 0; }
+
+/* PROGRESS */
+.progress-card { background: var(--bg2); border-radius: 14px; padding: 16px; margin-bottom: 8px; }
+.progress-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.progress-label { font-size: 15px; font-weight: 700; }
+.progress-pct { font-size: 13px; color: var(--accent); font-weight: 600; }
+.pbar { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
+.pbar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.5s ease; }
+
+/* STAGE CARDS */
+.stage { background: var(--bg2); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+.stage-hd { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.stage-color { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+.stage-info { flex: 1; }
+.stage-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.stage-meta { font-size: 12px; color: var(--muted); }
+.stage-arrow { color: var(--muted2); font-size: 14px; transition: transform 0.2s; }
+.stage.open .stage-arrow { transform: rotate(90deg); }
+.stage-body { display: none; border-top: 1px solid var(--border); }
+.stage.open .stage-body { display: block; }
+
+.topic { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background 0.1s; }
+.topic:last-child { border-bottom: none; }
+.topic:active { background: var(--bg3); }
+.topic.done { opacity: 0.5; }
+.check { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--muted2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; font-size: 12px; }
+.topic.done .check { background: var(--green); border-color: var(--green); color: #fff; }
+.topic-info { flex: 1; }
+.topic-name { font-size: 14px; font-weight: 500; }
+.topic.done .topic-name { text-decoration: line-through; }
+.topic-res { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.topic-actions { display: flex; gap: 6px; }
+.icon-btn { background: none; border: none; color: var(--muted2); font-size: 16px; cursor: pointer; padding: 4px; -webkit-tap-highlight-color: transparent; }
+
+/* TODAY */
+.streak-card { background: var(--bg2); border-radius: 14px; padding: 18px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.streak-val { font-size: 32px; font-weight: 700; color: var(--orange); line-height: 1; }
+.streak-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.check-btn { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; transition: opacity 0.15s; }
+.check-btn:active { opacity: 0.8; }
+.check-btn.checked { background: var(--green); }
+
+.tip-card { background: var(--bg2); border-radius: 14px; padding: 16px; margin-bottom: 8px; }
+.tip-tag { font-size: 11px; font-weight: 600; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.tip-text { font-size: 14px; line-height: 1.7; color: var(--text); }
+
+.cal-card { background: var(--bg2); border-radius: 14px; padding: 16px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; }
+.cal-day { aspect-ratio: 1; border-radius: 6px; background: var(--bg3); }
+.cal-day.on { background: var(--accent); }
+.cal-day.today-dot { box-shadow: 0 0 0 2px var(--accent); }
+
+/* FOCUS */
+.focus-card { background: var(--bg2); border-radius: 14px; padding: 16px; margin-bottom: 8px; }
+.focus-stage { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.focus-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+.focus-item:last-child { border-bottom: none; }
+.focus-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+/* AI TUTOR */
+.chat-wrap { display: flex; flex-direction: column; height: calc(100dvh - 50px); }
+.chat-msgs { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px; padding-top: 8px; }
+.bubble-row { display: flex; margin-bottom: 10px; }
+.bubble-row.user { justify-content: flex-end; }
+.bubble { max-width: 85%; padding: 11px 14px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+.bubble-row.user .bubble { background: var(--accent); color: #fff; border-radius: 16px 16px 4px 16px; }
+.bubble-row.ai .bubble { background: var(--bg2); color: var(--text); border-radius: 16px 16px 16px 4px; }
+.thinking { color: var(--muted); font-style: italic; }
+
+.api-banner { margin: 16px; background: var(--bg2); border-radius: 14px; padding: 16px; border: 1px solid var(--border); }
+.api-banner-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.api-banner-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+.api-row { display: flex; gap: 8px; }
+.api-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 13px; font-family: inherit; outline: none; }
+.api-input:focus { border-color: var(--accent); }
+.api-save { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+
+.chat-bottom { padding: 10px 12px; padding-bottom: calc(10px + var(--sb)); border-top: 1px solid var(--border); display: flex; gap: 8px; background: var(--bg); flex-shrink: 0; }
+.chat-in { flex: 1; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 10px 14px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; resize: none; max-height: 100px; -webkit-appearance: none; }
+.chat-in:focus { border-color: var(--accent); }
+.send-btn { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; align-self: flex-end; }
+.send-btn:disabled { opacity: 0.4; }
+
+/* SETTINGS */
+.setting-section { background: var(--bg2); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+.setting-row { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
+.setting-row:last-child { border-bottom: none; }
+.setting-label { flex: 1; font-size: 14px; }
+.setting-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.setting-btn { background: var(--bg3); border: none; color: var(--text); border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+.setting-btn.danger { color: var(--red); }
+
+/* MODAL */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: flex-end; justify-content: center; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--bg2); border-radius: 20px 20px 0 0; padding: 20px 20px calc(20px + var(--sb)); width: 100%; max-width: 480px; }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+.field { margin-bottom: 12px; }
+.field label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+.field input, .field textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; color: var(--text); font-size: 14px; font-family: inherit; outline: none; -webkit-appearance: none; }
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: none; height: 70px; }
+.modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+.modal-btn { flex: 1; padding: 13px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.modal-btn.cancel { background: var(--bg3); color: var(--text); }
+.modal-btn.confirm { background: var(--accent); color: #fff; }
+.modal-btn.del { background: var(--red); color: #fff; }
+
+/* ADD BTN */
+.add-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 13px; background: var(--bg2); border: 1px dashed var(--border); border-radius: 12px; color: var(--muted); font-size: 14px; cursor: pointer; margin-top: 4px; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+.add-btn:active { background: var(--bg3); }
+</style>
+</head>
+<body>
+<div id="app">
+  <nav class="nav">
+    <button class="nav-btn active" onclick="go('today')">오늘</button>
+    <button class="nav-btn" onclick="go('roadmap')">로드맵</button>
+    <button class="nav-btn" onclick="go('tutor')">AI 튜터</button>
+    <button class="nav-btn" onclick="go('settings')">설정</button>
+  </nav>
+  <div class="content">
+    <div class="tab active" id="tab-today"></div>
+    <div class="tab" id="tab-roadmap"></div>
+    <div class="tab" id="tab-tutor"></div>
+    <div class="tab" id="tab-settings"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-title" id="modal-title">항목 편집</div>
+    <div id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<script>
+const KEY = 'gnc3';
+const TIPS = [
+  "3Blue1Brown 선형대수 1강을 보세요. 모든 공부의 시작점이에요.",
+  "Python으로 스프링-댐퍼 시스템을 수치적분해보세요. scipy.integrate.odeint를 써보세요.",
+  "KSP에서 지구 저궤도 진입을 해보세요. 중력턴이 왜 필요한지 몸으로 느낄 수 있어요.",
+  "Bode plot을 3줄로 설명할 수 있나요? 못하면 아직 모르는 거예요.",
+  "MIT OCW 18.03 강의 1강 — 미분방정식이 왜 제어공학의 언어인지 알 수 있어요.",
+  "Falcon 9 착륙 영상을 보며 '저 순간 어떤 알고리즘이 동작하나' 생각해보세요.",
+  "Scott Manley의 'How SpaceX lands rockets' 영상을 오늘 보세요.",
+];
+
+const DEFAULT_STAGES = [
+  { id: 's1', name: 'Stage 1 — 수학 기반', duration: '3~4개월', color: '#4f9eff',
+    topics: [
+      { id: 't1', name: '선형대수', res: '3Blue1Brown + Gilbert Strang MIT 18.06' },
+      { id: 't2', name: '미분방정식', res: 'MIT OCW 18.03' },
+      { id: 't3', name: '고전역학', res: 'Kleppner & Kolenkow' },
+    ]},
+  { id: 's2', name: 'Stage 2 — 제어공학 입문', duration: '4~6개월', color: '#f5a623',
+    topics: [
+      { id: 't4', name: '전달함수 & 블록선도', res: 'Ogata Ch.1-3' },
+      { id: 't5', name: '안정성 분석 (Routh)', res: 'Ogata Ch.5' },
+      { id: 't6', name: '근궤적법', res: 'Ogata Ch.6' },
+      { id: 't7', name: '주파수 응답 (Bode)', res: 'Ogata Ch.7' },
+      { id: 't8', name: 'PID 제어 설계', res: 'Ogata Ch.8' },
+      { id: 't9', name: '상태공간 표현', res: 'Ogata Ch.10' },
+      { id: 't10', name: 'LQR 최적제어', res: 'Franklin Ch.9' },
+    ]},
+  { id: 's3', name: 'Stage 3 — 현대 제어 + 항법', duration: '6개월~', color: '#a855f7',
+    topics: [
+      { id: 't11', name: '칼만 필터', res: 'Probabilistic Robotics (Thrun)' },
+      { id: 't12', name: 'MPC (모델 예측 제어)', res: 'Rawlings & Mayne' },
+      { id: 't13', name: 'Convex Optimization', res: 'Boyd & Vandenberghe (무료)' },
+      { id: 't14', name: '궤도역학 기초', res: 'Bate, Mueller, White' },
+    ]},
+  { id: 's4', name: 'Stage 4 — 논문 & 실전', duration: '1년~', color: '#4caf7d',
+    topics: [
+      { id: 't15', name: 'Blackmore 논문 (SpaceX 착륙)', res: 'Lars Blackmore 2016' },
+      { id: 't16', name: 'Lossless Convexification', res: 'Açıkmeşe & Ploen' },
+      { id: 't17', name: '3D 로켓 착륙 시뮬레이터', res: '포트폴리오 프로젝트' },
+    ]},
+];
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(S)); }
+
+let S = load();
+if (!S.stages) S.stages = JSON.parse(JSON.stringify(DEFAULT_STAGES));
+if (!S.done) S.done = {};
+if (!S.dates) S.dates = [];
+if (!S.streak) S.streak = 0;
+if (!S.apiKey) S.apiKey = '';
+if (!S.openStages) S.openStages = { s1: true };
+
+let curTab = 'today';
+let msgs = [{ role: 'ai', text: '안녕하세요! 항공우주/제어공학 AI 튜터예요.\n\n궤도역학, 제어이론, Falcon 9 기술, 수학 개념 등 뭐든 물어보세요.' }];
+let aiLoading = false;
+
+const today = () => new Date().toISOString().split('T')[0];
+const uid = () => Math.random().toString(36).slice(2, 8);
+const allTopics = () => S.stages.flatMap(s => s.topics);
+const doneCount = () => allTopics().filter(t => S.done[t.id]).length;
+const totalCount = () => allTopics().length;
+const pct = () => totalCount() ? Math.round(doneCount() / totalCount() * 100) : 0;
+const escH = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+
+function activeStage() {
+  const i = S.stages.findIndex(s => s.topics.some(t => !S.done[t.id]));
+  return i === -1 ? S.stages[S.stages.length - 1] : S.stages[i];
+}
+
+function go(tab) {
+  curTab = tab;
+  document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', ['today','roadmap','tutor','settings'][i] === tab));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  render(tab);
+}
+
+function render(tab) {
+  if (tab === 'today') renderToday();
+  else if (tab === 'roadmap') renderRoadmap();
+  else if (tab === 'tutor') renderTutor();
+  else if (tab === 'settings') renderSettings();
+}
+
+/* ── TODAY ── */
+function renderToday() {
+  const tip = TIPS[new Date().getDay() % TIPS.length];
+  const studied = S.dates.includes(today());
+  const as = activeStage();
+  const pending = as.topics.filter(t => !S.done[t.id]).slice(0, 4);
+
+  let cal = '';
+  for (let i = 27; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const isToday = ds === today();
+    cal += `<div class="cal-day${S.dates.includes(ds)?' on':''}${isToday?' today-dot':''}"></div>`;
+  }
+
+  document.getElementById('tab-today').innerHTML = `
+    <div class="streak-card">
+      <div>
+        <div class="streak-val">${S.streak}</div>
+        <div class="streak-lbl">일 연속 학습 🔥</div>
+      </div>
+      <button class="check-btn${studied?' checked':''}" onclick="markToday()">
+        ${studied ? '✓ 오늘 완료' : '오늘 공부함'}
+      </button>
+    </div>
+
+    <div class="sec-title">오늘의 추천</div>
+    <div class="tip-card">
+      <div class="tip-tag">Today</div>
+      <div class="tip-text">${tip}</div>
+    </div>
+
+    <div class="sec-title">현재 집중 단계</div>
+    <div class="focus-card">
+      <div class="focus-stage" style="color:${as.color}">${as.name}</div>
+      ${pending.map(t => `<div class="focus-item"><div class="focus-dot"></div>${t.name}</div>`).join('')}
+      ${pending.length === 0 ? '<div style="font-size:13px;color:var(--green)">✓ 이 단계 완료!</div>' : ''}
+    </div>
+
+    <div class="sec-title">학습 캘린더 (28일)</div>
+    <div class="cal-card">
+      <div class="cal-grid">${cal}</div>
+    </div>
+  `;
+}
+
+function markToday() {
+  const t = today();
+  if (S.dates.includes(t)) return;
+  S.dates.push(t);
+  let streak = 1, d = new Date(); d.setDate(d.getDate() - 1);
+  while (S.dates.includes(d.toISOString().split('T')[0])) { streak++; d.setDate(d.getDate() - 1); }
+  S.streak = streak;
+  save(); renderToday();
+}
+
+/* ── ROADMAP ── */
+function renderRoadmap() {
+  let html = `
+    <div class="progress-card">
+      <div class="progress-top">
+        <div class="progress-label">전체 진행도</div>
+        <div class="progress-pct">${doneCount()} / ${totalCount()} · ${pct()}%</div>
+      </div>
+      <div class="pbar"><div class="pbar-fill" style="width:${pct()}%"></div></div>
+    </div>
+  `;
+
+  S.stages.forEach(stage => {
+    const open = S.openStages[stage.id];
+    const stageDone = stage.topics.filter(t => S.done[t.id]).length;
+    html += `
+      <div class="stage${open?' open':''}" id="stage-${stage.id}">
+        <div class="stage-hd" onclick="toggleStage('${stage.id}')">
+          <div class="stage-color" style="background:${stage.color}"></div>
+          <div class="stage-info">
+            <div class="stage-name">${stage.name}</div>
+            <div class="stage-meta">${stage.duration} · ${stageDone}/${stage.topics.length} 완료</div>
+          </div>
+          <button class="icon-btn" onclick="event.stopPropagation();editStage('${stage.id}')" style="margin-right:2px">✏️</button>
+          <div class="stage-arrow">›</div>
+        </div>
+        <div class="stage-body">
+          ${stage.topics.map(t => `
+            <div class="topic${S.done[t.id]?' done':''}" id="topic-${t.id}">
+              <div class="check" onclick="toggleDone('${t.id}')">${S.done[t.id]?'✓':''}</div>
+              <div class="topic-info" onclick="toggleDone('${t.id}')">
+                <div class="topic-name">${t.name}</div>
+                <div class="topic-res">${t.res}</div>
+              </div>
+              <div class="topic-actions">
+                <button class="icon-btn" onclick="editTopic('${stage.id}','${t.id}')">✏️</button>
+                <button class="icon-btn" onclick="deleteTopic('${stage.id}','${t.id}')">🗑️</button>
+              </div>
+            </div>
+          `).join('')}
+          <button class="add-btn" onclick="addTopic('${stage.id}')">+ 항목 추가</button>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `<button class="add-btn" style="margin-top:4px" onclick="addStage()">+ 단계 추가</button>`;
+  document.getElementById('tab-roadmap').innerHTML = html;
+}
+
+function toggleStage(id) {
+  S.openStages[id] = !S.openStages[id];
+  save(); renderRoadmap();
+}
+
+function toggleDone(id) {
+  S.done[id] = !S.done[id];
+  save(); renderRoadmap();
+  if (curTab === 'today') renderToday();
+}
+
+/* ── MODALS ── */
+function openModal(title, bodyHtml, btns) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-btns').innerHTML = btns;
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-bg')) document.getElementById('modal-bg').classList.remove('open');
+}
+
+function editStage(sid) {
+  const s = S.stages.find(x => x.id === sid);
+  openModal('단계 편집', `
+    <div class="field"><label>단계 이름</label><input id="m-name" value="${s.name}"></div>
+    <div class="field"><label>기간</label><input id="m-dur" value="${s.duration}"></div>
+    <div class="field"><label>색상 (hex)</label><input id="m-color" value="${s.color}"></div>
+  `, `
+    <button class="modal-btn cancel" onclick="closeModal()">취소</button>
+    <button class="modal-btn del" onclick="deleteStage('${sid}')">삭제</button>
+    <button class="modal-btn confirm" onclick="saveStage('${sid}')">저장</button>
+  `);
+}
+
+function saveStage(sid) {
+  const s = S.stages.find(x => x.id === sid);
+  s.name = document.getElementById('m-name').value;
+  s.duration = document.getElementById('m-dur').value;
+  s.color = document.getElementById('m-color').value;
+  save(); closeModal(); renderRoadmap();
+}
+
+function deleteStage(sid) {
+  if (!confirm('이 단계를 삭제할까요?')) return;
+  S.stages = S.stages.filter(s => s.id !== sid);
+  save(); closeModal(); renderRoadmap();
+}
+
+function addStage() {
+  const id = 's' + uid();
+  openModal('단계 추가', `
+    <div class="field"><label>단계 이름</label><input id="m-name" placeholder="Stage 5 — 심화"></div>
+    <div class="field"><label>기간</label><input id="m-dur" placeholder="3개월~"></div>
+    <div class="field"><label>색상 (hex)</label><input id="m-color" value="#4f9eff"></div>
+  `, `
+    <button class="modal-btn cancel" onclick="closeModal()">취소</button>
+    <button class="modal-btn confirm" onclick="confirmAddStage('${id}')">추가</button>
+  `);
+}
+
+function confirmAddStage(id) {
+  S.stages.push({ id, name: document.getElementById('m-name').value || '새 단계', duration: document.getElementById('m-dur').value, color: document.getElementById('m-color').value, topics: [] });
+  S.openStages[id] = true;
+  save(); closeModal(); renderRoadmap();
+}
+
+function editTopic(sid, tid) {
+  const t = S.stages.find(s => s.id === sid).topics.find(x => x.id === tid);
+  openModal('항목 편집', `
+    <div class="field"><label>이름</label><input id="m-name" value="${t.name}"></div>
+    <div class="field"><label>참고 자료</label><textarea id="m-res">${t.res}</textarea></div>
+  `, `
+    <button class="modal-btn cancel" onclick="closeModal()">취소</button>
+    <button class="modal-btn confirm" onclick="saveTopic('${sid}','${tid}')">저장</button>
+  `);
+}
+
+function saveTopic(sid, tid) {
+  const t = S.stages.find(s => s.id === sid).topics.find(x => x.id === tid);
+  t.name = document.getElementById('m-name').value;
+  t.res = document.getElementById('m-res').value;
+  save(); closeModal(); renderRoadmap();
+}
+
+function deleteTopic(sid, tid) {
+  const s = S.stages.find(x => x.id === sid);
+  s.topics = s.topics.filter(t => t.id !== tid);
+  delete S.done[tid];
+  save(); renderRoadmap();
+}
+
+function addTopic(sid) {
+  const id = 't' + uid();
+  openModal('항목 추가', `
+    <div class="field"><label>이름</label><input id="m-name" placeholder="새 학습 항목"></div>
+    <div class="field"><label>참고 자료</label><textarea id="m-res" placeholder="교재, 강의 등"></textarea></div>
+  `, `
+    <button class="modal-btn cancel" onclick="closeModal()">취소</button>
+    <button class="modal-btn confirm" onclick="confirmAddTopic('${sid}','${id}')">추가</button>
+  `);
+}
+
+function confirmAddTopic(sid, id) {
+  const s = S.stages.find(x => x.id === sid);
+  s.topics.push({ id, name: document.getElementById('m-name').value || '새 항목', res: document.getElementById('m-res').value });
+  save(); closeModal(); renderRoadmap();
+}
+
+/* ── TUTOR ── */
+function renderTutor() {
+  const hasKey = !!S.apiKey;
+  let apiBanner = '';
+  if (!hasKey) {
+    apiBanner = `
+      <div class="api-banner">
+        <div class="api-banner-title">🔑 API 키 연결</div>
+        <div class="api-banner-desc">Anthropic API 키를 입력하면 AI 튜터를 사용할 수 있어요. 키는 이 기기에만 저장되며 외부로 전송되지 않아요.<br><br>발급: <b>console.anthropic.com</b></div>
+        <div class="api-row">
+          <input class="api-input" id="api-in" type="password" placeholder="sk-ant-...">
+          <button class="api-save" onclick="saveKey()">저장</button>
+        </div>
+      </div>`;
+  }
+
+  let msgsHtml = msgs.map(m => `
+    <div class="bubble-row ${m.role}">
+      <div class="bubble${m.role==='ai'&&m.thinking?' thinking':''}">${escH(m.text)}</div>
+    </div>`).join('');
+  if (aiLoading) msgsHtml += `<div class="bubble-row ai"><div class="bubble thinking">생각 중...</div></div>`;
+
+  document.getElementById('tab-tutor').innerHTML = `
+    <div class="chat-wrap">
+      ${apiBanner}
+      <div class="chat-msgs" id="chat-msgs">${msgsHtml}</div>
+      <div class="chat-bottom">
+        <textarea class="chat-in" id="chat-in" rows="1" placeholder="${hasKey?'질문을 입력하세요...':'API 키를 먼저 입력해주세요'}" ${hasKey?'':'disabled'}></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMsg()" ${aiLoading||!hasKey?'disabled':''}>↑</button>
+      </div>
+    </div>`;
+
+  const cm = document.getElementById('chat-msgs');
+  if (cm) cm.scrollTop = cm.scrollHeight;
+  const ci = document.getElementById('chat-in');
+  if (ci) {
+    ci.addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} });
+    ci.addEventListener('input', () => { ci.style.height='auto'; ci.style.height=Math.min(ci.scrollHeight,100)+'px'; });
+  }
+}
+
+function saveKey() {
+  const k = document.getElementById('api-in')?.value?.trim();
+  if (!k) return;
+  S.apiKey = k; save(); renderTutor();
+}
+
+async function sendMsg() {
+  const ci = document.getElementById('chat-in');
+  const text = ci?.value?.trim();
+  if (!text || aiLoading || !S.apiKey) return;
+  ci.value = ''; ci.style.height = 'auto';
+  msgs.push({ role: 'user', text });
+  aiLoading = true; renderTutor();
+
+  const as = activeStage();
+  const sys = `당신은 항공우주공학 및 제어공학 전문 튜터입니다. 학습자는 컴퓨터공학 전공 대학생으로, 기본 미적분학과 Python 프로그래밍이 가능합니다.
+현재 학습 단계: ${as.name}. 전체 진행: ${doneCount()}/${totalCount()} 완료.
+규칙: 한국어로 답변. 수식은 직관적 설명과 함께. 필요시 Python 예시 포함. 막연한 격려 말고 구체적·기술적으로. 핵심만, 간결하게.`;
+
+  try {
+    const history = msgs.slice(-12).map(m => ({ role: m.role==='user'?'user':'assistant', content: m.text }));
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': S.apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sys, messages: history })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const reply = data.content?.find(b => b.type==='text')?.text || '응답을 받지 못했어요.';
+    msgs.push({ role: 'ai', text: reply });
+  } catch(e) {
+    msgs.push({ role: 'ai', text: '오류: ' + e.message });
+  }
+  aiLoading = false; renderTutor();
+}
+
+/* ── SETTINGS ── */
+function renderSettings() {
+  document.getElementById('tab-settings').innerHTML = `
+    <div class="sec-title">API</div>
+    <div class="setting-section">
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Anthropic API 키</div>
+          <div class="setting-sub">${S.apiKey ? '연결됨 (' + S.apiKey.slice(0,10) + '...)' : '미연결'}</div>
+        </div>
+        <button class="setting-btn" onclick="changeKey()">변경</button>
+      </div>
+    </div>
+
+    <div class="sec-title">데이터</div>
+    <div class="setting-section">
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">커리큘럼 초기화</div>
+          <div class="setting-sub">기본 로드맵으로 되돌리기</div>
+        </div>
+        <button class="setting-btn danger" onclick="resetCurriculum()">초기화</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">전체 초기화</div>
+          <div class="setting-sub">진도, 학습 기록 포함 전체 삭제</div>
+        </div>
+        <button class="setting-btn danger" onclick="resetAll()">초기화</button>
+      </div>
+    </div>
+
+    <div class="sec-title">앱 정보</div>
+    <div class="setting-section">
+      <div class="setting-row">
+        <div class="setting-label">버전</div>
+        <div style="font-size:13px;color:var(--muted)">GNC Study v1.0</div>
+      </div>
+    </div>
+  `;
+}
+
+function changeKey() {
+  openModal('API 키 변경', `
+    <div class="field"><label>새 API 키</label><input id="m-key" type="password" placeholder="sk-ant-..."></div>
+  `, `
+    <button class="modal-btn cancel" onclick="closeModal()">취소</button>
+    <button class="modal-btn confirm" onclick="confirmKey()">저장</button>
+  `);
+}
+function confirmKey() {
+  const k = document.getElementById('m-key')?.value?.trim();
+  if (k) { S.apiKey = k; save(); }
+  closeModal(); renderSettings();
+}
+
+function resetCurriculum() {
+  if (!confirm('커리큘럼을 초기화할까요? 진도는 유지돼요.')) return;
+  S.stages = JSON.parse(JSON.stringify(DEFAULT_STAGES));
+  S.openStages = { s1: true };
+  save(); renderSettings();
+}
+
+function resetAll() {
+  if (!confirm('모든 데이터를 삭제할까요?')) return;
+  localStorage.removeItem(KEY);
+  location.reload();
+}
+
+go('today');
+</script>
+</body>
+</html>
